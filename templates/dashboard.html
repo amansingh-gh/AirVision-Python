@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirVision Pro | Live Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #0b1120;       /* Deepest Navy */
+            --panel-bg: #1e293b;      /* Slate Blue */
+            --glass: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;        /* Sky Blue */
+            --success: #4ade80;       /* Green */
+            --danger: #f43f5e;        /* Red */
+            --warning: #fbbf24;       /* Amber */
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- 2. SIDEBAR (Navigation) --- */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-dark);
+            border-right: 1px solid var(--border);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+        .brand i { color: var(--accent); }
+
+        .nav-links { list-style: none; padding: 0; }
+        .nav-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+        .nav-item.active, .nav-item:hover {
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+        }
+
+        /* --- 3. MAIN CONTENT --- */
+        .main {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background: radial-gradient(circle at top right, #172033 0%, var(--bg-dark) 40%);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .search-bar {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 300px;
+        }
+        .search-bar input {
+            background: transparent;
+            border: none;
+            color: white;
+            outline: none;
+            width: 100%;
+        }
+        .btn-search {
+            background: var(--accent);
+            border: none;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* --- 4. DASHBOARD GRID --- */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr; 
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
+        /* Weather Section */
+        .weather-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), transparent);
+        }
+        .temp-display { font-size: 48px; font-weight: 700; }
+        .city-title { font-size: 20px; color: var(--text-muted); }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-box {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
+        .stat-val { font-size: 18px; font-weight: 600; margin-top: 5px; }
+
+        /* Health Sidebar */
+        .health-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .health-row:last-child { border-bottom: none; }
+        .health-icon {
+            width: 40px; height: 40px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-muted);
+        }
+        .health-status { font-weight: 600; font-size: 14px; }
+        .health-desc { font-size: 12px; color: var(--text-muted); }
+
+        /* Chart Area */
+        .chart-section {
+            grid-column: span 2;
+            height: 350px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="brand"><i class="fas fa-wind"></i> AirVision AI</div>
+        
+        <ul class="nav-links">
+            <li class="nav-item active"><i class="fas fa-chart-pie"></i> Dashboard</li>
+            <li class="nav-item"><i class="fas fa-map"></i> Heatmap</li>
+            <li class="nav-item"><i class="fas fa-history"></i> History</li>
+            <li class="nav-item"><i class="fas fa-cog"></i> Settings</li>
+        </ul>
+        
+
+        <div style="margin-top: auto; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 15px;">
+            <div style="font-size: 12px; color: var(--text-muted);">Current Location</div>
+            <div style="font-weight: bold; margin-top: 5px;" id="sidebar-city">Detecting...</div>
+        </div>
+    </div>
+
+    <div class="main">
+        
+        <div class="header">
+            <div>
+                <h1 style="margin: 0; font-size: 24px;">Overview</h1>
+                <div style="font-size: 14px; color: var(--text-muted);" id="date-display">--</div>
+            </div>
+            
+            <div class="search-bar">
+                <i class="fas fa-search" style="color: var(--text-muted);"></i>
+                <input type="text" id="city-input" placeholder="Search city..." onkeypress="handleEnter(event)">
+                <button class="btn-search" onclick="triggerSearch()"><i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <div class="grid-layout">
+            
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                
+                <div class="card weather-banner">
+                    <div>
+                        <div class="city-title" id="main-city">New Delhi</div>
+                        <div class="temp-display"><span id="val-temp">--</span>°C</div>
+                        
+                        <div style="color: var(--text-muted); margin-bottom: 5px; font-size: 18px;">
+                            <i class="fas fa-lungs"></i> AQI: <span id="val-aqi" style="color: var(--accent); font-weight: 700;">--</span>
+                        </div>
+                        <div style="color: var(--text-muted);"><i class="fas fa-tint"></i> Humidity: <span id="val-hum">--</span>%</div>
+                    </div>
+                    <i class="fas fa-cloud-sun" style="font-size: 80px; color: var(--accent);"></i>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Wind</div>
+                        <div class="stat-val"><span id="val-wind">--</span> m/s</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">NO2</div>
+                        <div class="stat-val" style="color: var(--warning)"><span id="val-no2">--</span></div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">CO Level</div>
+                        <div class="stat-val" style="color: var(--success)"><span id="val-co">--</span></div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Ozone</div>
+                        <div class="stat-val"><span id="val-o3">--</span></div>
+                    </div>
+                </div>
+
+                <div class="card chart-section">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                        <h3 style="margin: 0; font-size: 16px;">AI Prediction (48 Hours)</h3>
+                        <span style="font-size: 12px; background: rgba(56, 189, 248, 0.2); color: var(--accent); padding: 3px 8px; border-radius: 4px;">LSTM Model</span>
+                    </div>
+                    <div style="height: 280px; width: 100%;">
+                        <canvas id="predictionChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                
+                <div class="card" style="text-align: center; padding: 40px 20px;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 14px; color: var(--text-muted);">PM2.5 POLLUTION</h3>
+                    
+                    <div style="position: relative; width: 150px; height: 150px; margin: 0 auto;">
+                        <svg style="transform: rotate(-90deg); width: 150px; height: 150px;">
+                            <circle cx="75" cy="75" r="65" stroke="rgba(255,255,255,0.1)" stroke-width="10" fill="transparent"/>
+                            <circle id="pm-ring" cx="75" cy="75" r="65" stroke="var(--accent)" stroke-width="10" fill="transparent" 
+                                    stroke-dasharray="408" stroke-dashoffset="408" style="transition: 1s; stroke-linecap: round;"/>
+                        </svg>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                            <div style="font-size: 32px; font-weight: 800;" id="val-pm25">--</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">µg/m³</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; font-weight: bold; color: var(--success);" id="status-text">Safe</div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin: 0 0 15px 0; font-size: 14px; color: var(--text-muted);">HEALTH GUIDE</h3>
+                    
+                    <div class="health-row">
+                        <div class="health-icon" id="icon-mask"><i class="fas fa-head-side-mask"></i></div>
+                        <div>
+                            <div class="health-status" id="text-mask">No Mask Needed</div>
+                            <div class="health-desc">Air quality is good</div>
+                        </div>
+                    </div>
+                    <div class="health-row">
+                        <div class="health-icon" id="icon-run"><i class="fas fa-running"></i></div>
+                        <div>
+                            <div class="health-status" id="text-run">Go Outside</div>
+                            <div class="health-desc">Safe for sports</div>
+                        </div>
+                    </div>
+                    <div class="health-row">
+                        <div class="health-icon" id="icon-home"><i class="fas fa-home"></i></div>
+                        <div>
+                            <div class="health-status" id="text-vent">Ventilate</div>
+                            <div class="health-desc">Open windows</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- 1. SEARCH LOGIC ---
+        function handleEnter(e) { if(e.key === 'Enter') triggerSearch(); }
+        function triggerSearch() {
+            const city = document.getElementById('city-input').value;
+            if(city) window.location.search = `?city=${city}`;
+        }
+
+        // --- 2. CHART CONFIG ---
+        const ctx = document.getElementById('predictionChart').getContext('2d');
+        let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(56, 189, 248, 0.4)');
+        gradient.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+
+        let chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'PM2.5',
+                    data: [],
+                    borderColor: '#38bdf8',
+                    backgroundColor: gradient,
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 0,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#64748b' } },
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } }
+                }
+            }
+        });
+
+        // --- 3. DATA FETCHING ---
+        async function loadData() {
+            const params = new URLSearchParams(window.location.search);
+            const city = params.get('city');
+            if(!city) { document.getElementById('main-city').innerText = "Select a City"; return; }
+
+            // Set Inputs
+            document.getElementById('sidebar-city').innerText = city;
+            document.getElementById('city-input').value = city;
+
+            const formData = new FormData();
+            formData.append('city', city);
+
+            try {
+                const res = await fetch('/api/get_full_data', { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                if(data.error) return alert(data.error);
+
+                // Update Texts
+                document.getElementById('main-city').innerText = data.current.city_name;
+                document.getElementById('val-temp').innerText = Math.round(data.current.temp);
+                document.getElementById('val-hum').innerText = data.current.h;
+                
+                // --- NEW AQI LOGIC START ---
+                if (data.current.aqi) {
+                     const aqiLevel = data.current.aqi;
+                     let aqiText = aqiLevel;
+                     const aqiElem = document.getElementById('val-aqi');
+
+                     if(aqiLevel == 1) { aqiText = "1 (Good)"; aqiElem.style.color = '#4ade80'; }
+                     else if(aqiLevel == 2) { aqiText = "2 (Fair)"; aqiElem.style.color = '#fbbf24'; }
+                     else if(aqiLevel == 3) { aqiText = "3 (Moderate)"; aqiElem.style.color = '#fbbf24'; }
+                     else if(aqiLevel == 4) { aqiText = "4 (Poor)"; aqiElem.style.color = '#f43f5e'; }
+                     else if(aqiLevel == 5) { aqiText = "5 (Very Poor)"; aqiElem.style.color = '#f43f5e'; }
+                     
+                     aqiElem.innerText = aqiText;
+                }
+                // --- NEW AQI LOGIC END ---
+
+                document.getElementById('val-wind').innerText = data.current.w;
+                document.getElementById('val-no2').innerText = data.current.no2;
+                document.getElementById('val-co').innerText = data.current.co;
+                document.getElementById('val-o3').innerText = data.current.o3;
+                
+                const pm = Math.round(data.current.pm2_5);
+                document.getElementById('val-pm25').innerText = pm;
+
+                // Update Ring & Health
+                updateRing(pm);
+                updateHealth(pm);
+
+                // Update Chart
+                chart.data.labels = data.forecast.times;
+                chart.data.datasets[0].data = data.forecast.values;
+                chart.update();
+
+            } catch (e) { console.error(e); }
+        }
+
+        // --- HELPER FUNCTIONS ---
+        function updateRing(value) {
+            const circle = document.getElementById('pm-ring');
+            const circumference = 408; // 2 * PI * r(65)
+            const percent = Math.min(value / 300, 1);
+            const offset = circumference - (percent * circumference);
+            circle.style.strokeDashoffset = offset;
+            
+            const status = document.getElementById('status-text');
+            if(value > 150) { circle.style.stroke = '#f43f5e'; status.innerText = "DANGER"; status.style.color = "#f43f5e"; }
+            else if(value > 80) { circle.style.stroke = '#fbbf24'; status.innerText = "POOR"; status.style.color = "#fbbf24"; }
+            else { circle.style.stroke = '#4ade80'; status.innerText = "SAFE"; status.style.color = "#4ade80"; }
+        }
+
+        function updateHealth(pm) {
+            // Simple Logic for Health Cards
+            const setHealth = (id, iconId, text, colorClass) => {
+                document.getElementById(id).innerText = text;
+                document.getElementById(iconId).style.color = colorClass === 'red' ? '#f43f5e' : '#4ade80';
+            };
+
+            if(pm > 100) {
+                setHealth('text-mask', 'icon-mask', 'Wear Mask!', 'red');
+                setHealth('text-run', 'icon-run', 'Avoid Sports', 'red');
+                setHealth('text-vent', 'icon-home', 'Close Windows', 'red');
+            } else {
+                setHealth('text-mask', 'icon-mask', 'No Mask', 'green');
+                setHealth('text-run', 'icon-run', 'Safe Outside', 'green');
+                setHealth('text-vent', 'icon-home', 'Ventilate', 'green');
+            }
+        }
+
+        // Init
+        document.getElementById('date-display').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        loadData();
+
+    </script>
+</body>
+</html>
