@@ -4,6 +4,10 @@ import joblib
 import os
 from flask import Flask, request, jsonify, render_template
 from tensorflow.keras.models import load_model
+import tensorflow as tf
+
+tf.config.threading.set_inter_op_parallelism_threads(1)
+tf.config.threading.set_intra_op_parallelism_threads(1)
 
 app = Flask(__name__)
 
@@ -105,7 +109,8 @@ def get_full_data():
                 features_scaled = scaler.transform(features_for_scaling)
                 input_scaled = features_scaled[:, 0:3]
                 lstm_in = input_scaled.reshape((1, 1, 3))
-                pred_scaled = model.predict(lstm_in)[0][0]
+                # .predict() is heavy. Direct calling model() is 10x faster and uses less RAM.
+                pred_scaled = model(lstm_in, training=False).numpy()[0][0]
                 pred_row = np.array([[0, 0, 0, pred_scaled]]) 
                 pred_actual = scaler.inverse_transform(pred_row)[0][3]
                 

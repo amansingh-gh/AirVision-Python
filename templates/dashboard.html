@@ -417,12 +417,21 @@
             document.getElementById('sidebar-city').innerText = city;
             document.getElementById('city-input').value = city;
 
+            // --- ADD THIS: Change search button to Loading Spinner ---
+            const searchBtn = document.querySelector('.btn-search');
+            searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            // --------------------------------------------------------
+
             const formData = new FormData();
             formData.append('city', city);
 
             try {
                 const res = await fetch('/api/get_full_data', { method: 'POST', body: formData });
                 const data = await res.json();
+                
+                // --- ADD THIS: Change Spinner back to Arrow ---
+                searchBtn.innerHTML = '<i class="fas fa-arrow-right"></i>';
+                // ----------------------------------------------
                 
                 if(data.error) return alert(data.error);
 
