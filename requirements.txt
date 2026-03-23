@@ -1,8 +1,9 @@
 flask
-# tensorflow
-tensorflow-cpu
+tensorflow
+# tensorflow-cpu
 pandas
 numpy
 requests
 joblib
 scikit-learn
+gunicorn
