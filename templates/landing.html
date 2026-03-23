@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AirVision AI | Predict the Invisible</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #3b82f6;
@@ -13,17 +14,23 @@
             --light: #f8fafc;
         }
 
+        /* --- FIX: Box Sizing for perfect borders/padding --- */
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
             font-family: 'Inter', sans-serif;
             background-color: var(--dark);
             color: var(--light);
             overflow-x: hidden;
+            min-height: 100vh; /* FIX: Allows scrolling if screen is too small */
         }
 
         /* --- ANIMATED BACKGROUND --- */
         .hero-bg {
-            position: absolute;
+            position: fixed; /* FIX: Keeps background stable on scroll */
             top: 0; left: 0; width: 100%; height: 100vh;
             background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.15), transparent 60%);
             z-index: -1;
@@ -37,13 +44,13 @@
 
         /* --- HERO SECTION --- */
         .hero {
-            height: 100vh;
+            min-height: 100vh; /* FIX: Prevents cut-offs on small screens */
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 20px;
+            padding: 40px 20px;
         }
 
         .hero h1 {
@@ -54,6 +61,7 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -2px;
+            line-height: 1.1;
         }
 
         .hero p {
@@ -76,6 +84,8 @@
             text-decoration: none;
             transition: all 0.3s ease;
             box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+            display: inline-flex;
+            align-items: center;
         }
 
         .cta-btn:hover {
@@ -87,17 +97,23 @@
         /* --- FEATURES GRID --- */
         .features {
             display: flex;
+            flex-wrap: wrap; /* FIX: Allows cards to stack on mobile */
+            justify-content: center; /* FIX: Centers the cards perfectly */
             gap: 20px;
             margin-top: 60px;
+            max-width: 1000px;
+            width: 100%;
         }
 
         .feature-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 20px;
+            padding: 25px;
             border-radius: 16px;
             backdrop-filter: blur(10px);
-            width: 200px;
+            flex: 1; /* FIX: Makes cards equal width */
+            min-width: 250px; /* FIX: Minimum width before it wraps */
+            max-width: 300px;
             text-align: left;
             transition: 0.3s;
         }
@@ -109,14 +125,35 @@
         }
 
         .feature-icon {
-            font-size: 24px;
+            font-size: 28px;
             color: var(--accent);
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
-        .feature-title { font-weight: 700; margin-bottom: 5px; }
-        .feature-desc { font-size: 0.9rem; color: #64748b; }
+        .feature-title { font-weight: 700; margin-bottom: 8px; font-size: 1.1rem; }
+        .feature-desc { font-size: 0.95rem; color: #64748b; line-height: 1.5; }
 
+        /* --- MOBILE RESPONSIVENESS (The Magic Code) --- */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.8rem; /* Smaller text for mobile */
+                letter-spacing: -1px;
+            }
+            .hero p {
+                font-size: 1rem;
+            }
+            .cta-btn {
+                font-size: 1rem;
+                padding: 12px 30px;
+            }
+            .features {
+                margin-top: 40px;
+                gap: 15px;
+            }
+            .feature-card {
+                min-width: 100%; /* Makes cards full width on very small screens */
+            }
+        }
     </style>
 </head>
 <body>
@@ -124,14 +161,14 @@
     <div class="hero-bg"></div>
 
     <div class="hero">
-        <div style="margin-bottom: 20px; font-size: 14px; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; font-weight: bold;">
+        <div style="margin-bottom: 20px; font-size: 12px; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; font-weight: 700;">
             Powered by LSTM Neural Networks
         </div>
         
         <h1>AirVision AI</h1>
         
         <p>Don't just check the weather. Predict the invisible. <br>
-           Real-time air quality forecasting powered by advanced machine learning.</p>
+            Real-time air quality forecasting powered by advanced machine learning.</p>
         
         <a href="/dashboard" class="cta-btn">Launch Dashboard <i class="fas fa-arrow-right" style="margin-left: 10px;"></i></a>
 
@@ -139,17 +176,17 @@
             <div class="feature-card">
                 <i class="fas fa-brain feature-icon"></i>
                 <div class="feature-title">AI Prediction</div>
-                <div class="feature-desc">48-hour forecast using LSTM models.</div>
+                <div class="feature-desc">24-hour forecast using advanced LSTM deep learning models.</div>
             </div>
             <div class="feature-card">
                 <i class="fas fa-shield-virus feature-icon"></i>
                 <div class="feature-title">Health Alerts</div>
-                <div class="feature-desc">Smart advice for outdoor safety.</div>
+                <div class="feature-desc">Smart, dynamic advice for outdoor safety and ventilation.</div>
             </div>
             <div class="feature-card">
                 <i class="fas fa-satellite feature-icon"></i>
                 <div class="feature-title">Live Data</div>
-                <div class="feature-desc">Real-time sensor integration via API.</div>
+                <div class="feature-desc">Real-time global sensor integration via OpenWeather API.</div>
             </div>
         </div>
     </div>

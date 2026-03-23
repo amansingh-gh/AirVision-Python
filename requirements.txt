@@ -1,5 +1,6 @@
 flask
-tensorflow
+# tensorflow
+tensorflow-cpu
 pandas
 numpy
 requests
