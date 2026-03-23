@@ -8,7 +8,6 @@ from tensorflow.keras.models import load_model
 app = Flask(__name__)
 
 # --- 🔑 API KEY ---
-# Make sure this key is active
 API_KEY = "491b1a6eec1c098ee85934c9c48aaea9"  
 
 # --- AI CONFIG ---
@@ -62,25 +61,23 @@ def get_full_data():
         lon = geo_res[0]['lon']
         city_official_name = geo_res[0]['name']
 
-        # 2. Current Pollution (Card Display)
+        # 2. Current Pollution
         poll_url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={API_KEY}"
         poll_res = requests.get(poll_url).json()
         
-        # --- 🟢 CHANGE START: Extract AQI ---
-        # OpenWeatherMap provides AQI (1=Good, 5=Poor) inside ['list'][0]['main']['aqi']
         aqi_level = poll_res['list'][0]['main']['aqi'] 
         components = poll_res['list'][0]['components']
+        current_pm25 = components['pm2_5'] # LIVE PM2.5 DATA
         
         current_data = {
-            'aqi': aqi_level,  # <--- Added AQI here
-            'pm2_5': components['pm2_5'], 'pm10': components['pm10'],
+            'aqi': aqi_level, 
+            'pm2_5': current_pm25, 'pm10': components['pm10'],
             'no2': components['no2'], 'co': components['co'],
             'so2': components['so2'], 'o3': components['o3'],
             'city_name': city_official_name
         }
-        # --- 🟢 CHANGE END ---
 
-        # 3. Current Weather (Card Display)
+        # 3. Current Weather
         weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API_KEY}&units=metric"
         weather_res = requests.get(weather_url).json()
         
@@ -88,53 +85,55 @@ def get_full_data():
         current_data['w'] = weather_res['wind']['speed']
         current_data['temp'] = weather_res['main']['temp']
 
-        # 4. AI FORECAST LOOP (Uses ONLY Weather)
+        # 4. AI FORECAST (Uses only 8 steps for 24 Hours)
         forecast_url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={API_KEY}&units=metric"
         forecast_res = requests.get(forecast_url).json()
-        forecast_list = forecast_res['list'][:16] 
+        forecast_list = forecast_res['list'][:8] 
 
-        predictions = []
+        raw_predictions = []
         labels = []
 
         for item in forecast_list:
-            # Timestamp (Label)
             time_str = item['dt_txt'].split(" ")[1][:5]
-            
-            # ---> REAL FUTURE WEATHER <---
             fut_temp = item['main']['temp']
             fut_humidity = item['main']['humidity']
             fut_wind = item['wind']['speed']
             
-            # ---> FIX FOR "5 FEATURES ERROR" <---
-            # Input format: [Temp, Humidity, Wind, Dummy_Target]
             features_for_scaling = np.array([[fut_temp, fut_humidity, fut_wind, 0]])
             
             if scaler and model:
-                # 1. Scale (All 4 columns)
                 features_scaled = scaler.transform(features_for_scaling)
-                
-                # 2. Extract only first 3 columns for Input (Ignore dummy target)
                 input_scaled = features_scaled[:, 0:3]
-                
-                # 3. Reshape for LSTM (1 sample, 1 step, 3 features)
                 lstm_in = input_scaled.reshape((1, 1, 3))
-                
-                # 4. Predict
                 pred_scaled = model.predict(lstm_in)[0][0]
-                
-                # 5. Inverse Scale (To get real PM2.5 value back)
                 pred_row = np.array([[0, 0, 0, pred_scaled]]) 
                 pred_actual = scaler.inverse_transform(pred_row)[0][3]
                 
-                predictions.append(max(0, float(round(pred_actual, 2))))
+                # Minimum 1.0 to avoid division by zero later
+                raw_predictions.append(max(1.0, float(round(pred_actual, 2))))
             else:
-                predictions.append(0)
+                raw_predictions.append(1.0)
 
             labels.append(time_str)
 
+        # --- 🛠️ ML FIX: BASELINE CALIBRATION ---
+        # Scale the model's predictions to match the city's ACTUAL baseline
+        final_predictions = []
+        if len(raw_predictions) > 0:
+            first_raw_pred = raw_predictions[0]
+            # Calculate Ratio (e.g., Oslo current is 8, Model says 200 -> Ratio is 0.04)
+            calibration_ratio = current_pm25 / first_raw_pred if first_raw_pred > 0 else 1
+            
+            # Apply ratio to all future predictions
+            for p in raw_predictions:
+                calibrated_value = round(p * calibration_ratio, 2)
+                final_predictions.append(calibrated_value)
+        else:
+            final_predictions = raw_predictions
+
         return jsonify({
             'current': current_data,
-            'forecast': { 'values': predictions, 'times': labels }
+            'forecast': { 'values': final_predictions, 'times': labels }
         })
 
     except Exception as e:
