@@ -5,8 +5,8 @@
 The system utilizes an **LSTM (Long Short-Term Memory)** Deep Learning model to predict PM2.5 levels for the upcoming 48 hours, helping users make informed health decisions.
 
 <img width="1898" height="894" alt="image" src="https://github.com/user-attachments/assets/83bc14f7-dd11-4748-86b4-fcd34a397537" />
-<img width="1907" height="911" alt="image" src="<img width="1911" height="913" alt="image" src="https://github.com/user-attachments/assets/cb5cfb73-fdeb-47bb-a779-0f8d87c39a8c" />
-" />
+<img width="1911" height="913" alt="image" src="https://github.com/user-attachments/assets/42e5b2c0-d273-435d-97cf-a9e07b419a6d" />
+
 
 
 
