@@ -2,7 +2,7 @@
 
 **AirVision Pro** is a comprehensive web-based dashboard designed to monitor real-time Air Quality Index (AQI) and forecast pollution trends using Artificial Intelligence.
 
-The system utilizes an **LSTM (Long Short-Term Memory)** Deep Learning model to predict PM2.5 levels for the upcoming 48 hours, helping users make informed health decisions.
+The system utilizes an **LSTM (Long Short-Term Memory)** Deep Learning model to predict PM2.5 levels for the upcoming 24 hours, helping users make informed health decisions.
 
 <img width="1898" height="894" alt="image" src="https://github.com/user-attachments/assets/83bc14f7-dd11-4748-86b4-fcd34a397537" />
 <img width="1911" height="913" alt="image" src="https://github.com/user-attachments/assets/42e5b2c0-d273-435d-97cf-a9e07b419a6d" />
@@ -13,7 +13,7 @@ The system utilizes an **LSTM (Long Short-Term Memory)** Deep Learning model to 
 ## ✨ Key Features
 
 * **⚡ Real-Time Monitoring:** Live tracking of AQI, PM2.5, PM10, NO2, CO, Ozone, and weather conditions.
-* **🤖 AI Forecasting:** Predicts air quality trends for the next **48 hours** using a trained LSTM model.
+* **🤖 AI Forecasting:** Predicts air quality trends for the next **24 hours** using a trained LSTM model.
 * **🎨 Glassmorphism UI:** A modern, responsive, and aesthetic dashboard interface.
 * **🏥 Health Guide:** Dynamic health recommendations (e.g., "Wear Mask", "Ventilate Room") based on pollution severity.
 * **📊 Interactive Charts:** Visualizes pollution spikes using **Chart.js** with hover interactions.
